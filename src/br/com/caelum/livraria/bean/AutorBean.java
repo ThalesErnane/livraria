@@ -4,13 +4,16 @@ import java.io.Serializable;
 import java.util.List;
 
 import javax.faces.application.FacesMessage;
-import javax.faces.view.ViewScoped;
 import javax.faces.context.FacesContext;
+import javax.faces.view.ViewScoped;
+import javax.inject.Inject;
 import javax.inject.Named;
 
-import br.com.caelum.livraria.dao.DAO;
+import br.com.caelum.livraria.dao.AutorDAO;
+import br.com.caelum.livraria.dao.LivroDAO;
 import br.com.caelum.livraria.modelo.Autor;
 import br.com.caelum.livraria.modelo.Livro;
+import br.com.caelum.livraria.tx.Transacional;
 
 //@ManagedBean anotação sem ultilizar CDI
 @Named
@@ -25,6 +28,9 @@ public class AutorBean implements Serializable {
 
 	private Integer autorId;
 
+	@Inject
+	private AutorDAO autorDao;
+		
 	public Integer getAutorId() {
 		return autorId;
 	}
@@ -46,7 +52,7 @@ public class AutorBean implements Serializable {
 	}
 
 	public List<Autor> getAutores() {
-		return new DAO<Autor>(Autor.class).listaTodos();
+		return this.autorDao.listaTodos();
 	}
 
 	public List<Autor> getAutoresDoLivro() {
@@ -55,35 +61,40 @@ public class AutorBean implements Serializable {
 
 	public void carregaPelaId() {
 		Integer id = this.autor.getId();
-		this.autor = new DAO<Autor>(Autor.class).buscaPorId(id);
+		this.autor = this.autorDao.buscaPorId(id);
 		if (this.autor == null) {
 			this.autor = new Autor();
 		}
 	}
 
+	@Transacional
 	public String gravar() {
 		System.out.println("Gravando autor " + this.autor.getNome());
 
 		if (this.autor.getId() == null) {
-			new DAO<Autor>(Autor.class).adiciona(this.autor);
+			this.autorDao.adiciona(this.autor);
 		} else {
-			new DAO<Autor>(Autor.class).atualiza(this.autor);
+			this.autorDao.atualiza(this.autor);
 		}
 		this.autor = new Autor();
 		return "livro?faces-redirect=true";
 	}
 
+	@Transacional
 	public void remover(Autor autor) {
+		
 		System.out.println(this.livro.getAutores().contains(autor));
-
-		boolean existe = new DAO<Autor>(Autor.class).existe(this.autor);
+		boolean contemAutor = this.livro.getAutores().contains(autor);
+		// boolean existe = this.autorDao.existe(this.autor);
 		//this.livro.getAutores().contains(autor) == true
-		if (existe) {
+		
+		System.out.println( contemAutor == true);
+		if (contemAutor == true) {
 			FacesContext.getCurrentInstance().addMessage("autor",
 					new FacesMessage("Nao pode remover autor que contem um livro!"));
 		} else {
 
-			new DAO<Autor>(Autor.class).remove(autor);
+			this.autorDao.remove(autor);
 		}
 
 	}

@@ -28,7 +28,7 @@ public class Livro {
 	@Temporal(TemporalType.TIMESTAMP)
 	private Calendar dataLancamento = Calendar.getInstance();
 
-	@ManyToMany(fetch = FetchType.EAGER) // carrega os livros e o relacionamento com os autores
+	@ManyToMany // ao carregar livro não será carregado os autores, padrão Lazy 
 	private List<Autor> autores = new ArrayList<Autor>();
 
 	public List<Autor> getAutores() {
